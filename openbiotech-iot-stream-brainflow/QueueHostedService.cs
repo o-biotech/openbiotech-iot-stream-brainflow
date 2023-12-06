@@ -2,6 +2,7 @@ using brainflow;
 using Microsoft.Azure.Devices.Client;
 using System.IO.Ports;
 using System.Text;
+using System.Text.Json.Nodes;
 using System.Threading.Channels;
 
 namespace openbiotech_iot_stream_brainflow
@@ -61,7 +62,7 @@ namespace openbiotech_iot_stream_brainflow
         private readonly CancellationToken _cancellationToken;
         public int _timestamp;
         public DeviceClient _deviceClient;
-        public int[] _channels;
+        public List<int> _channels = new List<int>();
         public string _connectionString;
         public string _selectedPort;
 
@@ -77,7 +78,7 @@ namespace openbiotech_iot_stream_brainflow
 
         public int parse_args(string[] args, BrainFlowInputParams input_params)
         {
-            int board_id = (int)BoardIds.CYTON_BOARD;
+            int board_id = (int)BoardIds.EMOTIBIT_BOARD;
 
             Console.WriteLine("OpenBiotech IoT Stream - Brainflow");
             Console.WriteLine();
@@ -117,7 +118,7 @@ namespace openbiotech_iot_stream_brainflow
                     throw new Exception("No COM ports found on this machine.");
                 }
 
-                input_params.serial_port = _selectedPort;
+                //input_params.serial_port = _selectedPort;
                 //assume synthetic board by default
                 // use docs to get params for your specific board, e.g. set serial_port for Cyton
                 //for (int i = 0; i < args.Length; i++)
@@ -190,9 +191,60 @@ namespace openbiotech_iot_stream_brainflow
 
                 BoardShim board_shim = new BoardShim(board_id, input_params);
 
+                BoardDescr something = BoardShim.get_board_descr<BoardDescr>(board_id, 2);
+
+                Console.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(something));
+                
+
                 board_shim.prepare_session();
 
-                _channels = BoardShim.get_eeg_channels(board_id);
+                //Console.WriteLine(BoardShim.get_board_descr(board_id));
+
+
+                int[] magnetometerChannels = BoardShim.get_magnetometer_channels(board_id, 0);
+
+                int[] accelChannels = BoardShim.get_accel_channels(board_id, 0);
+
+                int[] gyroChannels = BoardShim.get_gyro_channels(board_id, 0);
+
+                int[] ppgChannels = BoardShim.get_ppg_channels(board_id, 1);
+
+                int[] temperatureChannels = BoardShim.get_temperature_channels(board_id, 2);
+
+                int[] edaChannels = BoardShim.get_eda_channels(board_id, 2);
+
+                foreach(int channel in magnetometerChannels)
+                {
+                    _channels.Add(channel);
+                }
+
+                foreach (int channel in accelChannels)
+                {
+                    _channels.Add(channel);
+                }
+
+                foreach (int channel in gyroChannels)
+                {
+                    _channels.Add(channel);
+                }
+
+                foreach (int channel in ppgChannels)
+                {
+                    _channels.Add(channel);
+                }
+
+                foreach (int channel in temperatureChannels)
+                {
+                    _channels.Add(channel);
+                }
+
+                foreach (int channel in edaChannels)
+                {
+                    _channels.Add(channel);
+                }
+
+                //_channels.Add(
+                //    foreach (int channel in magnetometerChannels) )
 
                 _timestamp = BoardShim.get_timestamp_channel(board_id);
 
